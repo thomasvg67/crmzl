@@ -6,7 +6,10 @@ const cors = require('cors');
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: 'https://crm.zoomlabs.in', // or use '*' for testing (not for production)
+  credentials: true // if using cookies or auth headers
+}));
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;

@@ -206,63 +206,24 @@ router.put('/update-profile', verifyToken, upload.fields([
   { name: 'imageFile', maxCount: 1 },
   { name: 'pdfFile', maxCount: 1 }
 ]), async (req, res) => {
-  const {
-    name, job, dob, bio, email, ph, loc, country,
-    address, website, education, workExp, socials, skills
-  } = req.body;
 
-  // Safely parse JSON fields
-  let parsedEducation = [], parsedWorkExp = [], parsedSkills = [], parsedSocials = {};
-  try {
-    parsedEducation = education ? JSON.parse(education) : [];
-    parsedWorkExp = workExp ? JSON.parse(workExp) : [];
-    parsedSkills = skills ? JSON.parse(skills) : [];
-    parsedSocials = socials ? JSON.parse(socials) : {};
-  } catch (jsonErr) {
-    console.error('❌ JSON parsing failed:', jsonErr.message);
-    return res.status(400).json({ message: 'Invalid JSON format in education, workExp, skills, or socials.' });
+  if (!req.body || Object.keys(req.body).length === 0) {
+    return res.status(400).json({ message: 'Form data missing. Ensure the request is multipart/form-data.' });
   }
 
   try {
-    const updatePayload = {
-      name,
-      job,
-      dob: dob ? new Date(dob) : undefined,
-      bio,
-      email: email ? encrypt(email) : undefined,
-      ph: ph ? encrypt(ph) : undefined,
-      loc,
-      country,
-      address,
-      website,
-      education: parsedEducation,
-      workExp: parsedWorkExp,
-      socials: parsedSocials,
-      skills: parsedSkills,
-      updtOn: new Date(),
-      updtBy: req.user.uname
-    };
+    const {
+      name, job, dob, bio, email, ph, loc, country,
+      address, website, education, workExp, socials, skills
+    } = req.body;
 
-    // Add uploaded file paths
-    if (req.files?.imageFile?.[0]) {
-      updatePayload.avtr = `/uploads/images/${req.files.imageFile[0].filename}`;
-    }
-    if (req.files?.pdfFile?.[0]) {
-      updatePayload.biodata = `/uploads/pdfs/${req.files.pdfFile[0].filename}`;
-    }
-
-    const updatedUser = await User.findOneAndUpdate(
-      { uname: req.user.uname },
-      updatePayload,
-      { new: true }
-    );
-
-    res.json({ message: 'Profile updated', user: updatedUser });
+    // rest of your logic
   } catch (error) {
-    console.error('❌ Profile update failed:', error.message);
-    res.status(500).json({ message: 'Profile update failed', error: error.message });
+    console.error('🛑 Error in /update-profile:', error);
+    return res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 //change password
 router.post('/change-password', verifyToken, async (req, res) => {

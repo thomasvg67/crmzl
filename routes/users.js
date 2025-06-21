@@ -10,6 +10,53 @@ const  { verifyToken }  = require('../middleware/verifyToken')
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+const multer = require('multer');
+const path = require('path');
+
+
+
+// Configure storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, 'uploads/images/');
+    } else if (file.mimetype === 'application/pdf') {
+      cb(null, 'uploads/pdfs/');
+    } else {
+      cb(new Error('Invalid file type'), false);
+    }
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const filename = Date.now() + '-' + file.fieldname + ext;
+    cb(null, filename);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 300 * 1024 }, // 300 KB
+  fileFilter: (req, file, cb) => {
+    const imageTypes = ['image/jpeg', 'image/jpg'];
+    const docTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+    if (file.fieldname === 'imageFile') {
+      if (!imageTypes.includes(file.mimetype)) {
+        return cb(new Error('Only JPG/JPEG image files are allowed'));
+      }
+    }
+
+    if (file.fieldname === 'pdfFile') {
+      if (!docTypes.includes(file.mimetype)) {
+        return cb(new Error('Only PDF or DOC/DOCX files are allowed for biodata'));
+      }
+    }
+
+    cb(null, true);
+  }
+});
+
+
 // Create a dummy admin if not exists
 router.get('/create-admin', async (req, res) => {
   try {
@@ -95,7 +142,7 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       { id: user._id, uname: user.uname, role: user.role },
       JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '10m' }
     );
 
     res.json({ token, user: { uId: user.uId, name: user.name, role: user.role } });
@@ -142,7 +189,8 @@ router.get('/me', verifyToken, async (req, res) => {
    socials: user.socials ,
      skills: user.skills || [],
   education: user.education,
-  workExp: user.workExp
+  workExp: user.workExp,
+  biodata: user.biodata
     });
   } catch (err) {
     console.error('❌ Server error in /me:', err.message);
@@ -151,37 +199,65 @@ router.get('/me', verifyToken, async (req, res) => {
 });
 
 // PUT /api/users/update-profile
-router.put('/update-profile', verifyToken, async (req, res) => {
-  const { name, job, dob, bio, email, ph, loc, country, address, website, education, workExp, socials , skills } = req.body;
+router.put('/update-profile', verifyToken, upload.fields([
+  { name: 'imageFile', maxCount: 1 },
+  { name: 'pdfFile', maxCount: 1 }
+]), async (req, res) => {
+  const {
+    name, job, dob, bio, email, ph, loc, country,
+    address, website, education, workExp, socials, skills
+  } = req.body;
+
+  // Safely parse JSON fields
+  let parsedEducation = [], parsedWorkExp = [], parsedSkills = [], parsedSocials = {};
+  try {
+    parsedEducation = education ? JSON.parse(education) : [];
+    parsedWorkExp = workExp ? JSON.parse(workExp) : [];
+    parsedSkills = skills ? JSON.parse(skills) : [];
+    parsedSocials = socials ? JSON.parse(socials) : {};
+  } catch (jsonErr) {
+    console.error('❌ JSON parsing failed:', jsonErr.message);
+    return res.status(400).json({ message: 'Invalid JSON format in education, workExp, skills, or socials.' });
+  }
 
   try {
-    const updated = await User.findOneAndUpdate(
+    const updatePayload = {
+      name,
+      job,
+      dob: dob ? new Date(dob) : undefined,
+      bio,
+      email: email ? encrypt(email) : undefined,
+      ph: ph ? encrypt(ph) : undefined,
+      loc,
+      country,
+      address,
+      website,
+      education: parsedEducation,
+      workExp: parsedWorkExp,
+      socials: parsedSocials,
+      skills: parsedSkills,
+      updtOn: new Date(),
+      updtBy: req.user.uname
+    };
+
+    // Add uploaded file paths
+    if (req.files?.imageFile?.[0]) {
+      updatePayload.avtr = `/uploads/images/${req.files.imageFile[0].filename}`;
+    }
+    if (req.files?.pdfFile?.[0]) {
+      updatePayload.biodata = `/uploads/pdfs/${req.files.pdfFile[0].filename}`;
+    }
+
+    const updatedUser = await User.findOneAndUpdate(
       { uname: req.user.uname },
-      {
-        name: name,
-        job: job,
-        dob: new Date(dob),
-        bio: bio,
-        email: encrypt(email),
-ph: encrypt(ph),
-loc: loc,
-country: country,
-  address : address,
-  website: website,
-  socials,
-  skills,
-  education,
-  workExp,
-        updtOn: new Date(),
-        updtBy: req.user.uname
-      },
+      updatePayload,
       { new: true }
     );
 
-    res.json({ message: 'Profile updated', user: updated });
-  } catch (err) {
-    console.error('Update failed:', err.message);
-    res.status(500).json({ message: 'Update failed' });
+    res.json({ message: 'Profile updated', user: updatedUser });
+  } catch (error) {
+    console.error('❌ Profile update failed:', error.message);
+    res.status(500).json({ message: 'Profile update failed', error: error.message });
   }
 });
 

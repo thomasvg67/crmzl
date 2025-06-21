@@ -2,15 +2,20 @@ const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const path = require('path');
 
 dotenv.config();
 
 const app = express();
+// app.use(cors());
 app.use(cors({
   origin: 'https://crm.zoomlabs.in', // or use '*' for testing (not for production)
   credentials: true // if using cookies or auth headers
 }));
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
+app.use('/uploads/images', express.static(path.join(__dirname, 'uploads/images')));
+app.use('/uploads/pdfs', express.static(path.join(__dirname, 'uploads/pdfs')));
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;

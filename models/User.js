@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['admin', 'staff'], default: 'staff' },
   pwd: { type: String, required: true },                  // hashed password
   avtr: { type: String, default: 'assets/img/user.png' },
+  biodata: { type: String },
     job: { type: String }, // e.g., Web Developer
   dob: { type: Date }, // Date of birth
   loc: { type: String }, // e.g., New York, USA

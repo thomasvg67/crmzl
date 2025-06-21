@@ -152,7 +152,10 @@ router.post('/login', async (req, res) => {
 });
 
 //my profile
-router.get('/me', verifyToken, async (req, res) => {
+router.get('/me', verifyToken, upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "biodata", maxCount: 1 }
+  ]), async (req, res) => {
   try {
     const user = await User.findOne({ uname: req.user.uname });
 

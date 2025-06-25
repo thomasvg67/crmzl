@@ -8,9 +8,13 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },                 // full name
   email: { type: String, required: true, unique: true },
   ph: { type: String },
-  role: { type: String, enum: ['admin', 'staff'], default: 'staff' },
+  role: {
+  type: String,
+  enum: ['emplyT1', 'emplyT2', 'emplyT3', 'offAdm', 'adm'],
+  default: 'emplyT1'
+},
   pwd: { type: String, required: true },                  // hashed password
-  avtr: { type: String, default: 'assets/img/user.png' },
+  avtr: { type: String},
   biodata: { type: String },
     job: { type: String }, // e.g., Web Developer
   dob: { type: Date }, // Date of birth

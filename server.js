@@ -7,11 +7,11 @@ const path = require('path');
 dotenv.config();
 
 const app = express();
-// app.use(cors());
-app.use(cors({
-  origin: 'https://crm.zoomlabs.in', // or use '*' for testing (not for production)
-  credentials: true // if using cookies or auth headers
-}));
+app.use(cors());
+// app.use(cors({
+//   origin: 'https://crm.zoomlabs.in', // or use '*' for testing (not for production)
+//   credentials: true // if using cookies or auth headers
+// }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -30,7 +30,9 @@ mongoose.connect(MONGO_URI)
 // Routes
 app.use('/api/notes', require('./routes/notes'));
 app.use('/api/contacts', require('./routes/contacts'));
+app.use('/api/feedbacks', require('./routes/FdBack'));
 app.use('/api/users', require('./routes/users'));
+
 
 
 // Start server

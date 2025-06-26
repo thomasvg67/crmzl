@@ -114,8 +114,9 @@ exports.getProfile = async (req, res) => {
       website: user.website || '',
       socials: user.socials,
       skills: user.skills || [],
-      education: user.education,
-      workExp: user.workExp,
+      education: Array.isArray(user.education) ? user.education : [],
+workExp: Array.isArray(user.workExp) ? user.workExp : [],
+
       biodata: user.biodata
     });
   } catch (err) {
@@ -124,43 +125,51 @@ exports.getProfile = async (req, res) => {
 };
 
 exports.updateProfile = async (req, res) => {
-  const {
-    name, job, dob, bio, email, ph, loc, country,
-    address, website, education, workExp, socials, skills
-  } = req.body;
-
-  let parsedEducation = [], parsedWorkExp = [], parsedSkills = [], parsedSocials = {};
   try {
-    parsedEducation = education ? JSON.parse(education) : [];
-    parsedWorkExp = workExp ? JSON.parse(workExp) : [];
-    parsedSkills = skills ? JSON.parse(skills) : [];
-    parsedSocials = socials ? JSON.parse(socials) : {};
-  } catch (err) {
-    return res.status(400).json({ message: 'Invalid JSON format in education, workExp, skills, or socials.' });
-  }
+    const {
+      name, job, dob, bio, email, ph, loc, country,
+      address, website, education, workExp, socials, skills
+    } = req.body;
 
-  try {
-    const updatePayload = {
-      name, job,
-      dob: dob ? new Date(dob) : undefined,
-      bio,
-      email: email ? encrypt(email) : undefined,
-      ph: ph ? encrypt(ph) : undefined,
-      loc, country, address, website,
-      education: parsedEducation,
-      workExp: parsedWorkExp,
-      socials: parsedSocials,
-      skills: parsedSkills,
-      updtOn: new Date(),
-      updtBy: req.user.uname
-    };
+    // 🧹 Parse JSON fields
+    const parsedEducation = education ? JSON.parse(education) : [];
+    const parsedWorkExp = workExp ? JSON.parse(workExp) : [];
+    const parsedSkills = skills ? JSON.parse(skills) : [];
+    const parsedSocials = socials ? JSON.parse(socials) : {};
 
+    // 🧠 Only include non-empty fields
+    const updatePayload = {};
+    if (name?.trim()) updatePayload.name = name.trim();
+    if (job?.trim()) updatePayload.job = job.trim();
+    if (dob) updatePayload.dob = new Date(dob);
+    if (bio?.trim()) updatePayload.bio = bio.trim();
+    if (email?.trim()) updatePayload.email = encrypt(email.trim());
+    if (ph?.trim()) updatePayload.ph = encrypt(ph.trim());
+    if (loc?.trim()) updatePayload.loc = loc.trim();
+    if (country?.trim()) updatePayload.country = country.trim();
+    if (address?.trim()) updatePayload.address = address.trim();
+    if (website?.trim()) updatePayload.website = website.trim();
+  if (parsedEducation.some(e => e.college?.trim())) {
+  updatePayload.education = parsedEducation;
+}
+if (parsedWorkExp.some(e => e.company?.trim())) {
+  updatePayload.workExp = parsedWorkExp;
+}
+
+    if (Object.keys(parsedSocials).length > 0) updatePayload.socials = [parsedSocials];
+    if (parsedSkills.length > 0) updatePayload.skills = parsedSkills;
+
+    // 🖼️ File uploads
     if (req.files?.imageFile?.[0]) {
       updatePayload.avtr = `/uploads/images/${req.files.imageFile[0].filename}`;
     }
     if (req.files?.pdfFile?.[0]) {
       updatePayload.biodata = `/uploads/pdfs/${req.files.pdfFile[0].filename}`;
     }
+
+    // 📅 Audit
+    updatePayload.updtOn = new Date();
+    updatePayload.updtBy = req.user.uname;
 
     const updatedUser = await User.findOneAndUpdate(
       { uname: req.user.uname },
@@ -170,9 +179,11 @@ exports.updateProfile = async (req, res) => {
 
     res.json({ message: 'Profile updated', user: updatedUser });
   } catch (err) {
+    console.error('❌ Update failed:', err);
     res.status(500).json({ message: 'Profile update failed', error: err.message });
   }
 };
+
 
 exports.changePassword = async (req, res) => {
   const { oldPassword, newPassword } = req.body;
@@ -279,23 +290,31 @@ exports.updateUserById = async (req, res) => {
       address, website, education, workExp, socials, skills
     } = req.body;
 
-    const parsedEducation = JSON.parse(education || '[]');
-    const parsedWorkExp = JSON.parse(workExp || '[]');
-    const parsedSocials = JSON.parse(socials || '{}');
-    const parsedSkills = JSON.parse(skills || '[]');
+    const parsedEducation = education ? JSON.parse(education) : [];
+    const parsedWorkExp = workExp ? JSON.parse(workExp) : [];
+    const parsedSkills = skills ? JSON.parse(skills) : [];
+    const parsedSocials = socials ? JSON.parse(socials) : {};
 
-    const updatePayload = {
-      name, job, dob: dob ? new Date(dob) : null, bio, loc, country,
-      address, website,
-      email: email ? encrypt(email) : undefined,
-      ph: ph ? encrypt(ph) : undefined,
-      education: parsedEducation,
-      workExp: parsedWorkExp,
-      socials: parsedSocials,
-      skills: parsedSkills,
-      updtOn: new Date(),
-      updtBy: req.user.uname
-    };
+    const updatePayload = {};
+    if (name?.trim()) updatePayload.name = name.trim();
+    if (job?.trim()) updatePayload.job = job.trim();
+    if (dob) updatePayload.dob = new Date(dob);
+    if (bio?.trim()) updatePayload.bio = bio.trim();
+    if (email?.trim()) updatePayload.email = encrypt(email.trim());
+    if (ph?.trim()) updatePayload.ph = encrypt(ph.trim());
+    if (loc?.trim()) updatePayload.loc = loc.trim();
+    if (country?.trim()) updatePayload.country = country.trim();
+    if (address?.trim()) updatePayload.address = address.trim();
+    if (website?.trim()) updatePayload.website = website.trim();
+   if (parsedEducation.some(e => e.college?.trim())) {
+  updatePayload.education = parsedEducation;
+}
+if (parsedWorkExp.some(e => e.company?.trim())) {
+  updatePayload.workExp = parsedWorkExp;
+}
+
+    if (Object.keys(parsedSocials).length > 0) updatePayload.socials = [parsedSocials];
+    if (parsedSkills.length > 0) updatePayload.skills = parsedSkills;
 
     if (req.files?.imageFile?.[0]) {
       updatePayload.avtr = `/uploads/images/${req.files.imageFile[0].filename}`;
@@ -304,15 +323,26 @@ exports.updateUserById = async (req, res) => {
       updatePayload.biodata = `/uploads/pdfs/${req.files.pdfFile[0].filename}`;
     }
 
-const updatedUser = await User.findOneAndUpdate({ uId: req.params.id }, updatePayload, { new: true });
-    if (!updatedUser) return res.status(404).json({ message: 'User not found' });
+    updatePayload.updtOn = new Date();
+    updatePayload.updtBy = req.user.uname;
+
+    const updatedUser = await User.findOneAndUpdate(
+      { uId: req.params.id },
+      updatePayload,
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
     res.status(200).json({ message: 'User updated successfully', user: updatedUser });
   } catch (err) {
-    console.error(err);
+    console.error('❌ updateUserById error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 
 exports.softDeleteUser = async (req, res) => {

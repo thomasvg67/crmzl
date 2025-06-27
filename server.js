@@ -32,7 +32,7 @@ app.use('/api/notes', require('./routes/notes'));
 app.use('/api/contacts', require('./routes/contacts'));
 app.use('/api/feedbacks', require('./routes/FdBack'));
 app.use('/api/users', require('./routes/users'));
-
+app.use('/api/scrum-board', require('./routes/scrumBoardRoutes'));
 
 
 // Start server

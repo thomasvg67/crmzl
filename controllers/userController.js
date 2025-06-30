@@ -114,7 +114,7 @@ exports.verifyUser = async (req, res) => {
     await user.save();
     // redirect to your React login
     // res.redirect('http://localhost:5173/login');
-    res.redirect('https://crmzl.onrender.com/login');
+    res.redirect('https://crm.zoomlabs.in/login');
 
   } catch (err) {
     console.error('Email verification failed:', err);

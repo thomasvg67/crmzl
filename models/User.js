@@ -73,8 +73,8 @@ workExp: [
   dltOn: { type: Date },
   dltBy: { type: String },
   dltIp: { type: String },
-  dltSts: { type: String, default: '0' },
-  sts: { type: String, default: '0' }  // active/inactive
+ sts: { type: Number, default: 0 },
+dltSts: { type: Number, default: 0 },
 });
 
 module.exports = mongoose.model('User', userSchema);

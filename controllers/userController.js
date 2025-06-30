@@ -1,8 +1,13 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const transporter = require('../middleware/mailer'); 
 const { getNextUserId } = require('../models/Counter');
 const { encrypt, decrypt } = require('../routes/encrypt');
+const fs = require("fs");
+const path = require("path");
+const handlebars = require("handlebars");
+
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -38,7 +43,10 @@ exports.createUser = async (req, res) => {
 
   try {
     const exists = await User.findOne({ uname });
-    if (exists) return res.status(400).json({ message: 'Username already exists' });
+    if (exists) {
+      console.log("DEBUG: user already exists", exists);
+      return res.status(400).json({ message: 'Username already exists' });
+    }
 
     const hashedPwd = await bcrypt.hash(pwd, 10);
     const nextUId = await getNextUserId();
@@ -51,17 +59,69 @@ exports.createUser = async (req, res) => {
       email: encrypt(email),
       ph: encrypt(ph),
       role: 'employee',
-      crtdBy: req.user.uname,
+      crtdBy: uname,
       crtdIp: req.ip,
+      sts: 0,
       ...rest
     });
 
     await newUser.save();
-    res.json({ message: 'User created', user: newUser });
+
+    // ✉️ send mail
+    const decryptedEmail = decrypt(newUser.email);
+
+    // verification link (use environment BASE_URL)
+    const verificationLink = `${process.env.BASE_URL}/api/users/verify/${newUser._id}`;
+
+    // read the HTML file
+    const templatePath = path.join(__dirname, "../utils/email/verifyaccount.html");
+    const source = fs.readFileSync(templatePath, "utf8");
+
+    // compile with handlebars
+    const template = handlebars.compile(source);
+    const emailHtml = template({
+      username: newUser.name,
+      userId: newUser._id,
+      verificationLink: verificationLink,
+    });
+
+    await transporter.sendMail({
+      from: process.env.MAIL_USER,
+      to: decryptedEmail,
+      subject: 'Verify your account',
+      html: emailHtml
+    });
+
+    res.json({ message: 'User created, email sent', user: newUser });
   } catch (err) {
+    console.error("❌ createUser error:", err);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+
+exports.verifyUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).send('Invalid verification link');
+    }
+    if (user.sts === 1) {
+      return res.send('Your email is already verified.');
+    }
+    user.sts = 1;
+    await user.save();
+    // redirect to your React login
+    // res.redirect('http://localhost:5173/login');
+    res.redirect('https://crmzl.onrender.com/login');
+
+  } catch (err) {
+    console.error('Email verification failed:', err);
+    res.status(500).send('Server error');
+  }
+};
+
 
 exports.login = async (req, res) => {
   const { uname, password } = req.body;
@@ -70,7 +130,12 @@ exports.login = async (req, res) => {
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
     const isMatch = await bcrypt.compare(password, user.pwd);
-    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+
+if (user.sts !== 1) {
+  return res.status(403).json({ message: 'Account not verified. Please check your email.' });
+}
+
 
     const token = jwt.sign(
       { id: user._id, uname: user.uname, role: user.role },

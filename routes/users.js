@@ -26,6 +26,7 @@ router.put('/:id', verifyToken, upload.fields([
   { name: "pdfFile", maxCount: 1 }
 ]), userController.updateUserById);
 router.put('/:id/delete', verifyToken, userController.softDeleteUser);
+router.get('/verify/:id', userController.verifyUser);
 
 
 module.exports = router;

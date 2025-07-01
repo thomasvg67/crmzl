@@ -7,7 +7,7 @@ const path = require('path');
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
 app.use(cors({
   origin: 'https://crm.zoomlabs.in', // or use '*' for testing (not for production)
   credentials: true // if using cookies or auth headers

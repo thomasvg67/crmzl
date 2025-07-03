@@ -23,10 +23,10 @@ exports.createAdmin = async (req, res) => {
       uId: nextUId,
       uname: 'admin',
       name: 'Administrator',
-      email: encrypt('admin@example.com'),
+      email: encrypt('admin'),
       ph: encrypt('9876543210'),
       pwd: hashedPwd,
-      role: 'admin',
+      role: 'adm',
       crtdBy: 'system',
       crtdIp: req.ip
     });
@@ -138,12 +138,12 @@ if (user.sts !== 1) {
 
 
     const token = jwt.sign(
-      { id: user._id, uname: user.uname, role: user.role },
+      { id: user._id,uId: user.uId, uname: user.uname, role: user.role },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    res.json({ token, user: { uId: user.uId, name: user.name, role: user.role } });
+    res.json({ token});
   } catch (err) {
     res.status(500).send('Server error');
   }
@@ -415,7 +415,7 @@ exports.softDeleteUser = async (req, res) => {
     const userId = req.params.id;
 
     const update = {
-      dltSts: '1',
+      dltSts: 1,
       dltOn: new Date(),
       dltBy: req.user.uname,
       dltIp: req.ip
@@ -434,6 +434,25 @@ exports.softDeleteUser = async (req, res) => {
     res.json({ message: 'User marked as deleted', user: deletedUser });
   } catch (err) {
     console.error('Error deleting user:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.getAssignableUsers = async (req, res) => {
+  try {
+    const users = await User.find({
+      sts: 1,
+      dltSts: { $ne: 1 }
+    }).sort({ name: 1 }); // alphabetical for better UX
+
+    const data = users.map(user => ({
+      uId: user.uId,
+      name: user.name
+    }));
+
+    res.json(data);
+  } catch (err) {
+    console.error('Error fetching assignable users:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };

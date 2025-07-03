@@ -8,6 +8,8 @@ const contactSchema = new mongoose.Schema({
   occup: String,
   ph: { type: String, required: true },
   loc: String,
+  subject: { type: String },
+assignedTo: { type: String },
   nxtAlrt: Date,
   avtr: {
     type: String,
@@ -22,8 +24,8 @@ const contactSchema = new mongoose.Schema({
   dltOn: { type: Date },
   dltBy: { type: String },
   dltIp: { type: String },
-  dltSts: { type: String, default: 0 },
-  sts: { type: String, default: 0 },
+  dltSts: { type: Number, default: 0 },
+  sts: { type: Number, default: 0 },
 });
 
 module.exports = mongoose.model('Contact', contactSchema);

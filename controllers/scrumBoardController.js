@@ -1,4 +1,3 @@
-// controllers/scrumBoardController.js
 const ScrmBrd = require('../models/ScrmBrd');
 const ScrmBrdTsk = require('../models/ScrmBrdTsk');
 
@@ -33,10 +32,13 @@ exports.getScrumBoard = async (req, res) => {
 // Add a new list
 exports.addList = async (req, res) => {
   try {
+    const userId = req.user?.uId || 'system';
+    const ip = req.ip;
+
     const newList = new ScrmBrd({
       lstName: req.body.lstName,
-      crtdBy: req.user?.uname,
-      crtdIp: req.ip,
+      crtdBy: userId,
+      crtdIp: ip,
     });
     await newList.save();
     res.json({ message: 'List added successfully', list: newList });
@@ -48,13 +50,16 @@ exports.addList = async (req, res) => {
 // Edit list
 exports.editList = async (req, res) => {
   try {
+    const userId = req.user?.uId || 'system';
+    const ip = req.ip;
+
     const updated = await ScrmBrd.findByIdAndUpdate(
       req.params.id,
       {
         lstName: req.body.lstName,
-        updtBy: req.user?.uname,
+        updtBy: userId,
         updtOn: new Date(),
-        updtIp: req.ip,
+        updtIp: ip,
       },
       { new: true }
     );
@@ -64,24 +69,27 @@ exports.editList = async (req, res) => {
   }
 };
 
-// Delete list
+// Delete list (soft delete)
 exports.deleteList = async (req, res) => {
   try {
+    const userId = req.user?.uId || 'system';
+    const ip = req.ip;
+
     const deleted = await ScrmBrd.findByIdAndUpdate(
       req.params.id,
       {
         dltSts: true,
-        dltBy: req.user?.uname,
+        dltBy: userId,
         dltOn: new Date(),
-        dltIp: req.ip,
+        dltIp: ip,
       },
       { new: true }
     );
     await ScrmBrdTsk.updateMany({ listId: req.params.id }, {
       dltSts: true,
-      dltBy: req.user?.uname,
+      dltBy: userId,
       dltOn: new Date(),
-      dltIp: req.ip,
+      dltIp: ip,
     });
     res.json({ message: 'List deleted', list: deleted });
   } catch (err) {
@@ -89,15 +97,18 @@ exports.deleteList = async (req, res) => {
   }
 };
 
-// Add task to a list
+// Add task
 exports.addTask = async (req, res) => {
   try {
+    const userId = req.user?.uId || 'system';
+    const ip = req.ip;
+
     const task = new ScrmBrdTsk({
       tskName: req.body.tskName,
       tskDesc: req.body.tskDesc,
       listId: req.body.listId,
-      crtdBy: req.user?.uname,
-      crtdIp: req.ip,
+      crtdBy: userId,
+      crtdIp: ip,
     });
     await task.save();
     res.json({ message: 'Task added', task });
@@ -109,14 +120,17 @@ exports.addTask = async (req, res) => {
 // Edit task
 exports.editTask = async (req, res) => {
   try {
+    const userId = req.user?.uId || 'system';
+    const ip = req.ip;
+
     const updated = await ScrmBrdTsk.findByIdAndUpdate(
       req.params.id,
       {
         tskName: req.body.tskName,
         tskDesc: req.body.tskDesc,
-        updtBy: req.user?.uname,
+        updtBy: userId,
         updtOn: new Date(),
-        updtIp: req.ip,
+        updtIp: ip,
       },
       { new: true }
     );
@@ -126,16 +140,19 @@ exports.editTask = async (req, res) => {
   }
 };
 
-// Delete task
+// Delete task (soft delete)
 exports.deleteTask = async (req, res) => {
   try {
+    const userId = req.user?.uId || 'system';
+    const ip = req.ip;
+
     const deleted = await ScrmBrdTsk.findByIdAndUpdate(
       req.params.id,
       {
         dltSts: true,
-        dltBy: req.user?.uname,
+        dltBy: userId,
         dltOn: new Date(),
-        dltIp: req.ip,
+        dltIp: ip,
       },
       { new: true }
     );
@@ -145,15 +162,19 @@ exports.deleteTask = async (req, res) => {
   }
 };
 
+// Clear all tasks in a list
 exports.clearTasksFromList = async (req, res) => {
   try {
+    const userId = req.user?.uId || 'system';
+    const ip = req.ip;
+
     await ScrmBrdTsk.updateMany(
       { listId: req.params.id, dltSts: false },
       {
         dltSts: true,
-        dltBy: req.user?.uname,
+        dltBy: userId,
         dltOn: new Date(),
-        dltIp: req.ip,
+        dltIp: ip,
       }
     );
     res.json({ message: 'All tasks cleared successfully' });

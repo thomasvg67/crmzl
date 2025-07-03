@@ -2,17 +2,18 @@ const Note = require('../models/Note');
 
 // Create a new note
 exports.addNote = async (req, res) => {
-  const { title, desc, uname } = req.body;
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-
   try {
+    const { title, desc } = req.body;
+    const ip = req.ip;
+    const userId = req.user?.uId || 'system';
+
     const newNote = new Note({
       title,
       desc,
       isFav: false,
       tag: "",
       crtdOn: new Date(),
-      crtdBy: uname || 'guest',
+      crtdBy: userId,
       crtdIp: ip,
       nSts: 0,
       dltSts: 0,
@@ -32,10 +33,10 @@ exports.addNote = async (req, res) => {
   }
 };
 
-// Get all notes
+// Get all notes (excluding deleted)
 exports.getAllNotes = async (req, res) => {
   try {
-    const notes = await Note.find().sort({ crtdOn: -1 });
+    const notes = await Note.find({ dltSts: '0' }).sort({ crtdOn: -1 });
     res.json(notes);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch notes' });
@@ -45,8 +46,19 @@ exports.getAllNotes = async (req, res) => {
 // Update tag
 exports.updateTag = async (req, res) => {
   try {
-    const { tag } = req.body;
-    await Note.findByIdAndUpdate(req.params.id, { tag });
+    const ip = req.ip;
+    const userId = req.user?.uId || 'system';
+
+    await Note.findByIdAndUpdate(
+      req.params.id,
+      {
+        tag: req.body.tag,
+        updtOn: new Date(),
+        updtBy: userId,
+        updtIp: ip
+      }
+    );
+
     res.json({ success: true, message: "Tag updated" });
   } catch (err) {
     res.status(500).json({ success: false, message: "Failed to update tag" });
@@ -56,18 +68,41 @@ exports.updateTag = async (req, res) => {
 // Update favourite status
 exports.updateFavourite = async (req, res) => {
   try {
-    const { isFav } = req.body;
-    await Note.findByIdAndUpdate(req.params.id, { isFav });
+    const ip = req.ip;
+    const userId = req.user?.uId || 'system';
+
+    await Note.findByIdAndUpdate(
+      req.params.id,
+      {
+        isFav: req.body.isFav,
+        updtOn: new Date(),
+        updtBy: userId,
+        updtIp: ip
+      }
+    );
+
     res.json({ success: true, message: "Favourite status updated" });
   } catch (err) {
     res.status(500).json({ success: false, message: "Failed to update favourite status" });
   }
 };
 
-// Delete note
+// Soft delete note
 exports.deleteNote = async (req, res) => {
   try {
-    await Note.findByIdAndDelete(req.params.id);
+    const ip = req.ip;
+    const userId = req.user?.uId || 'system';
+
+    await Note.findByIdAndUpdate(
+      req.params.id,
+      {
+        dltOn: new Date(),
+        dltBy: userId,
+        dltIp: ip,
+        dltSts: '1'
+      }
+    );
+
     res.json({ success: true, message: "Note deleted successfully" });
   } catch (err) {
     res.status(500).json({ success: false, message: "Error deleting note" });

@@ -18,15 +18,14 @@ router.put('/update-profile', verifyToken, upload.fields([
   { name: 'pdfFile', maxCount: 1 }
 ]), userController.updateProfile);
 router.post('/change-password', verifyToken, userController.changePassword);
-router.post('/change-password', verifyToken, userController.changePassword);
 router.get('/paginated', verifyToken, userController.getPaginatedUsers);
-router.get('/:id', verifyToken, userController.getUserById);
 router.put('/:id', verifyToken, upload.fields([
   { name: "imageFile", maxCount: 1 },
   { name: "pdfFile", maxCount: 1 }
 ]), userController.updateUserById);
 router.put('/:id/delete', verifyToken, userController.softDeleteUser);
 router.get('/verify/:id', userController.verifyUser);
-
+router.get('/assignable', verifyToken, userController.getAssignableUsers);
+router.get('/:id', verifyToken, userController.getUserById);
 
 module.exports = router;

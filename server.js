@@ -3,11 +3,12 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
+const createDailyAlerts = require("./middleware/crnJbAlrt");
 
 dotenv.config();
 
 const app = express();
-
+createDailyAlerts();
 app.use(cors({
   origin: 'https://crm.zoomlabs.in', // or use '*' for testing (not for production)
   credentials: true // if using cookies or auth headers
@@ -38,6 +39,7 @@ app.use('/api/feedbacks', require('./routes/FdBack'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/scrum-board', require('./routes/scrumBoardRoutes'));
 app.use('/api/todolist', require('./routes/todolistRoutes'));
+app.use('/api/alerts', require('./routes/alertRoutes'));
 
 // Start server
 app.listen(PORT, () => {

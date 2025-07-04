@@ -8,7 +8,6 @@ const createDailyAlerts = require("./middleware/crnJbAlrt");
 dotenv.config();
 
 const app = express();
-createDailyAlerts();
 app.use(cors({
   origin: 'https://crm.zoomlabs.in', // or use '*' for testing (not for production)
   credentials: true // if using cookies or auth headers
@@ -29,7 +28,8 @@ const MONGO_URI = process.env.MONGO_URI;
 
 // Connect to MongoDB
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('MongoDB connected'))
+  .then(() => {console.log('MongoDB connected');createDailyAlerts();
+})
   .catch(err => console.error('MongoDB connection error:', err));
   
 // Routes

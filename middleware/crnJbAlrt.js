@@ -5,7 +5,7 @@ const Contact = require("../models/Contact");
 const Alert = require("../models/Alert");
 
 const createDailyAlerts = () => {
-  cron.schedule("1 0 * * *", async () => {
+  cron.schedule("31 13 * * *", async () => {
     console.log("[CRON] Running daily alerts check...");
 
     try {
@@ -46,7 +46,7 @@ const createDailyAlerts = () => {
       console.error("[CRON] Error in dailyAlerts job:", err);
     }
   }, {
-    timezone: "UTC"  // adjust to your timezone
+    timezone: "Asia/Kolkata"  // adjust to your timezone
   });
 };
 

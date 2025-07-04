@@ -351,7 +351,7 @@ exports.getUserById = async (req, res) => {
 exports.updateUserById = async (req, res) => {
   try {
     const {
-      name, job, dob, bio, email, ph, loc, country,
+      name, job, dob,role, bio, email, ph, loc, country,
       address, website, education, workExp, socials, skills
     } = req.body;
 
@@ -364,6 +364,7 @@ exports.updateUserById = async (req, res) => {
     if (name?.trim()) updatePayload.name = name.trim();
     if (job?.trim()) updatePayload.job = job.trim();
     if (dob) updatePayload.dob = new Date(dob);
+    if (role?.trim()) updatePayload.role = role.trim();
     if (bio?.trim()) updatePayload.bio = bio.trim();
     if (email?.trim()) updatePayload.email = encrypt(email.trim());
     if (ph?.trim()) updatePayload.ph = encrypt(ph.trim());

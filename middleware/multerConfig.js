@@ -9,6 +9,8 @@ const storage = multer.diskStorage({
       cb(null, 'uploads/images/');
     } else if (file.mimetype === 'application/pdf') {
       cb(null, 'uploads/pdfs/');
+    } else if (file.mimetype.startsWith('audio/')) {
+      cb(null, 'uploads/audio/'); // <-- add audio folder
     } else {
       cb(new Error('Invalid file type'), false);
     }
@@ -28,6 +30,7 @@ const fileFilter = (req, file, cb) => {
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   ];
+  const audioTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/x-m4a'];
 
   if (file.fieldname === 'imageFile' && !imageTypes.includes(file.mimetype)) {
     return cb(new Error('Only JPG/JPEG image files are allowed'));
@@ -37,12 +40,16 @@ const fileFilter = (req, file, cb) => {
     return cb(new Error('Only PDF or DOC/DOCX files are allowed for biodata'));
   }
 
+  if (file.fieldname === 'audioFile' && !audioTypes.includes(file.mimetype)) {
+    return cb(new Error('Only MP3, WAV, M4A audio files are allowed'));
+  }
+
   cb(null, true);
 };
 
 const upload = multer({
   storage,
-  limits: { fileSize: 300 * 1024 },
+  limits: { fileSize: 20 * 1024 * 1024 }, // allow 20 MB
   fileFilter
 });
 

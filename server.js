@@ -22,6 +22,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
 app.use('/uploads/images', express.static(path.join(__dirname, 'uploads/images')));
 app.use('/uploads/pdfs', express.static(path.join(__dirname, 'uploads/pdfs')));
+app.use('/uploads/audio', express.static(path.join(__dirname, 'uploads/audio')));
+
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;

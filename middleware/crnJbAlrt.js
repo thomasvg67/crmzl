@@ -5,7 +5,7 @@ const Contact = require("../models/Contact");
 const Alert = require("../models/Alert");
 
 const createDailyAlerts = () => {
-  cron.schedule("31 13 * * *", async () => {
+  cron.schedule("1 0 * * *", async () => {
     console.log("[CRON] Running daily alerts check...");
 
     try {

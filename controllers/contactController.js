@@ -29,6 +29,16 @@ exports.addContact = async (req, res) => {
 
     const { fdback, ...contactData } = req.body;
 
+    if (req.file && req.file.filename) {
+  contactData.audio = [
+    {
+      file: req.file.filename,
+      uploadedOn: new Date()
+    }
+  ];
+}
+
+
     const contact = new Contact({
       ...contactData,
       crtdOn: new Date(),
@@ -128,6 +138,22 @@ exports.editContact = async (req, res) => {
     const userId = req.user?.uId || 'system'; // consistent: store UID
 
     const { fdback, ...contactData } = req.body;
+
+   if (req.file && req.file.filename) {
+  await Contact.findByIdAndUpdate(
+    req.params.id,
+    {
+      $push: {
+        audio: {
+          file: req.file.filename,
+          uploadedOn: new Date()
+        }
+      }
+    }
+  );
+}
+
+
 
     const updateData = {
       ...contactData,

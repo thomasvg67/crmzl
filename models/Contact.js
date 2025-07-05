@@ -11,6 +11,13 @@ const contactSchema = new mongoose.Schema({
   subject: { type: String },
 assignedTo: { type: String },
   nxtAlrt: Date,
+  gmap: String,  
+audio: [
+  {
+    file: String,
+    uploadedOn: { type: Date, default: Date.now }
+  }
+],
   avtr: {
     type: String,
     default: 'assets/img/90x90.jpg'
